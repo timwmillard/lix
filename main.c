@@ -10,7 +10,7 @@
 #include <signal.h>
 
 #define DEFAULT_PORT 9333
-#define SERVER_BACKLOG 50
+#define SERVER_BACKLOG 100
 #define NUM_WOKERS 20
 
 #define BUF_SIZE 4096
