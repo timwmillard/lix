@@ -11,7 +11,7 @@
 
 #define DEFAULT_PORT 9333
 #define SERVER_BACKLOG 100
-#define NUM_WOKERS 20
+#define NUM_WOKERS 50
 
 #define BUF_SIZE 4096
 
@@ -22,6 +22,54 @@ static struct config {
 } config;
 
 static int lix_server;
+
+typedef struct conn_qnode {
+    int conn;
+    struct conn_qnode *next;
+} conn_qnode;
+
+
+static struct conn_q {
+    conn_qnode *head;
+    conn_qnode *tail;
+} conn_q = {NULL, NULL};
+
+pthread_mutex_t mu_conn_q = PTHREAD_MUTEX_INITIALIZER;
+
+void conn_enqueue(int conn)
+{
+    conn_qnode *node = malloc(sizeof(conn_qnode));
+    node->conn = conn;
+    node->next = NULL;
+
+    pthread_mutex_lock(&mu_conn_q);
+    if (conn_q.tail == NULL) {
+        conn_q.head = node;
+    } else {
+        conn_q.tail->next = node;
+    }
+    conn_q.tail = node;
+    pthread_mutex_unlock(&mu_conn_q);
+}
+
+int conn_dequeue()
+{
+    pthread_mutex_lock(&mu_conn_q);
+    if (conn_q.head == NULL) {
+        pthread_mutex_unlock(&mu_conn_q);
+        return -1;
+    }
+
+    int conn = conn_q.head->conn;
+    conn_qnode *temp = conn_q.head;
+    conn_q.head = conn_q.head->next;
+    if (conn_q.head == NULL)
+        conn_q.tail = NULL;
+    pthread_mutex_unlock(&mu_conn_q);
+
+    free(temp);
+    return conn;
+}
 
 static void usage()
 {
@@ -74,12 +122,14 @@ void handle_conn(int conn)
     close(conn);
 }
 
-void *mux_conn(void *pconn)
+void *mux_conn(void *args)
 {
-    int conn = *(int*) pconn;
-    free(pconn);
-    handle_conn(conn);
-    return NULL;
+    while (1) {
+        int conn = conn_dequeue();
+        if (conn != -1) {
+            handle_conn(conn);
+        }
+    }
 }
 
 void lix_shutdown(int s)
@@ -97,10 +147,10 @@ int main(int argc, char *argv[])
 
     parse_options(argc, argv);
     
-    // // Start worker pool
-    // for (int i = 0; i < NUM_WOKERS; i++) {
-    //     pthread_create(&workers[i], NULL, mux_conn, NULL);
-    // }
+    // Start worker pool
+    for (int i = 0; i < NUM_WOKERS; i++) {
+        pthread_create(&workers[i], NULL, mux_conn, NULL);
+    }
 
     struct sockaddr_in addr;
     int err;
@@ -143,11 +193,7 @@ int main(int argc, char *argv[])
             fprintf(stderr, "Error accepting connection, error [%d]: %s\n", errno, strerror(errno));
             continue;
         }
-
-        int *pconn = malloc(sizeof(int));
-        *pconn = conn;
-        pthread_t t;
-        pthread_create(&t, NULL, mux_conn, pconn);
+        conn_enqueue(conn);
     }
 
     close(lix_server);
