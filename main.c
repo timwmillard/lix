@@ -15,7 +15,6 @@
 
 #define BUF_SIZE 4096
 
-pthread_t workers[NUM_WOKERS];
 
 static struct config {
     u_int16_t port;
@@ -23,11 +22,13 @@ static struct config {
 
 static int lix_server;
 
+// Thread Pool with connection queue
+pthread_t workers[NUM_WOKERS];
+
 typedef struct conn_qnode {
     int conn;
     struct conn_qnode *next;
 } conn_qnode;
-
 
 static struct conn_q {
     conn_qnode *head;
