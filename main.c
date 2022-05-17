@@ -25,48 +25,48 @@ static int lix_server;
 // Thread Pool with connection queue
 pthread_t workers[NUM_WOKERS];
 
-typedef struct conn_qnode {
+struct conn_qnode {
     int conn;
     struct conn_qnode *next;
-} conn_qnode;
+};
 
 static struct conn_q {
-    conn_qnode *head;
-    conn_qnode *tail;
-} conn_q = {NULL, NULL};
+    struct conn_qnode *head;
+    struct conn_qnode *tail;
+    pthread_mutex_t mu;
+} conn_q = {NULL, NULL, PTHREAD_MUTEX_INITIALIZER};
 
-pthread_mutex_t mu_conn_q = PTHREAD_MUTEX_INITIALIZER;
 
 void conn_enqueue(int conn)
 {
-    conn_qnode *node = malloc(sizeof(conn_qnode));
+    struct conn_qnode *node = malloc(sizeof(struct conn_qnode));
     node->conn = conn;
     node->next = NULL;
 
-    pthread_mutex_lock(&mu_conn_q);
+    pthread_mutex_lock(&conn_q.mu);
     if (conn_q.tail == NULL) {
         conn_q.head = node;
     } else {
         conn_q.tail->next = node;
     }
     conn_q.tail = node;
-    pthread_mutex_unlock(&mu_conn_q);
+    pthread_mutex_unlock(&conn_q.mu);
 }
 
 int conn_dequeue()
 {
-    pthread_mutex_lock(&mu_conn_q);
+    pthread_mutex_lock(&conn_q.mu);
     if (conn_q.head == NULL) {
-        pthread_mutex_unlock(&mu_conn_q);
+        pthread_mutex_unlock(&conn_q.mu);
         return -1;
     }
 
     int conn = conn_q.head->conn;
-    conn_qnode *temp = conn_q.head;
+    struct conn_qnode *temp = conn_q.head;
     conn_q.head = conn_q.head->next;
     if (conn_q.head == NULL)
         conn_q.tail = NULL;
-    pthread_mutex_unlock(&mu_conn_q);
+    pthread_mutex_unlock(&conn_q.mu);
 
     free(temp);
     return conn;
