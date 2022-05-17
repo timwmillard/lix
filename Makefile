@@ -1,10 +1,10 @@
 
 EXEC = lix
-
+	
 CC = clang
 RM = rm -rf
 
-CFLAGS = 
+CFLAGS =
 LIBS =
 INCLUDES =
 
@@ -18,6 +18,8 @@ run:
 
 serve: build run
 
+install: build
+	cp $(EXEC) $(HOME)/bin/
 
 clean:
 	rm -rf $(EXEC)
