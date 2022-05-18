@@ -15,7 +15,7 @@
 
 #define BUF_SIZE 4096
 
-
+// Config holds all the server configuration
 static struct config {
     u_int16_t port;
 } config;
@@ -30,13 +30,14 @@ struct conn_qnode {
     struct conn_qnode *next;
 };
 
+// Connection Queue of awating connections read to be handled.
 static struct conn_q {
     struct conn_qnode *head;
     struct conn_qnode *tail;
     pthread_mutex_t mu;
 } conn_q = {NULL, NULL, PTHREAD_MUTEX_INITIALIZER};
 
-
+// Add a connection to the queue
 void conn_enqueue(int conn)
 {
     struct conn_qnode *node = malloc(sizeof(struct conn_qnode));
@@ -53,6 +54,7 @@ void conn_enqueue(int conn)
     pthread_mutex_unlock(&conn_q.mu);
 }
 
+// Get and remove a connection from the queue.
 int conn_dequeue()
 {
     pthread_mutex_lock(&conn_q.mu);
@@ -72,6 +74,7 @@ int conn_dequeue()
     return conn;
 }
 
+// Show usage details
 static void usage()
 {
     fprintf(stdout,
@@ -81,6 +84,7 @@ static void usage()
     exit(0);
 }
 
+// Parse the command line options
 void parse_options(int argc, char *argv[])
 {
     for (int i = 0; i < argc; i++) {
@@ -100,6 +104,7 @@ void parse_options(int argc, char *argv[])
     }
 }
 
+// Handle the connection
 void handle_conn(int conn)
 {
     char buf[BUF_SIZE];
@@ -123,6 +128,9 @@ void handle_conn(int conn)
     close(conn);
 }
 
+// Mutiplex the connections
+// This function runs on each worker thread.
+// Checking the quere for new connections and then handle them.
 void *mux_conn(void *args)
 {
     while (1) {
@@ -133,6 +141,7 @@ void *mux_conn(void *args)
     }
 }
 
+// Shutdown the serve
 void lix_shutdown(int s)
 {
     printf("\n");
