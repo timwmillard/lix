@@ -62,10 +62,8 @@ void conn_enqueue(int conn)
 int conn_dequeue()
 {
     pthread_mutex_lock(&conn_q.mu);
-    if (conn_q.head == NULL) {
+    while (conn_q.head == NULL) {
         pthread_cond_wait(&conn_q.ready, &conn_q.mu);
-        pthread_mutex_unlock(&conn_q.mu);
-        return -1;
     }
 
     int conn = conn_q.head->conn;
@@ -146,9 +144,7 @@ void *mux_conn(void *args)
 {
     while (1) {
         int conn = conn_dequeue();
-        if (conn != -1) {
-            handle_conn(conn);
-        }
+        handle_conn(conn);
     }
 }
 
