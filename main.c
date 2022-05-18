@@ -53,8 +53,8 @@ void conn_enqueue(int conn)
         conn_q.tail->next = node;
     }
     conn_q.tail = node;
-    pthread_cond_signal(&conn_q.ready);
     pthread_mutex_unlock(&conn_q.mu);
+    pthread_cond_signal(&conn_q.ready);
 }
 
 // Get and remove a connection from the queue.
