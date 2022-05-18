@@ -11,7 +11,7 @@
 
 #define DEFAULT_PORT 9333
 #define SERVER_BACKLOG 100
-#define NUM_WOKERS 50
+#define NUM_WOKERS 20
 
 #define BUF_SIZE 4096
 
@@ -25,6 +25,7 @@ static int lix_server;
 // Thread Pool with connection queue
 pthread_t workers[NUM_WOKERS];
 
+
 struct conn_qnode {
     int conn;
     struct conn_qnode *next;
@@ -35,7 +36,8 @@ static struct conn_q {
     struct conn_qnode *head;
     struct conn_qnode *tail;
     pthread_mutex_t mu;
-} conn_q = {NULL, NULL, PTHREAD_MUTEX_INITIALIZER};
+    pthread_cond_t ready;
+} conn_q = {NULL, NULL, PTHREAD_MUTEX_INITIALIZER, PTHREAD_COND_INITIALIZER};
 
 // Add a connection to the queue
 void conn_enqueue(int conn)
@@ -51,14 +53,17 @@ void conn_enqueue(int conn)
         conn_q.tail->next = node;
     }
     conn_q.tail = node;
+    pthread_cond_signal(&conn_q.ready);
     pthread_mutex_unlock(&conn_q.mu);
 }
 
 // Get and remove a connection from the queue.
+// Will block on empty queue until a new connection is place in queue.
 int conn_dequeue()
 {
     pthread_mutex_lock(&conn_q.mu);
     if (conn_q.head == NULL) {
+        pthread_cond_wait(&conn_q.ready, &conn_q.mu);
         pthread_mutex_unlock(&conn_q.mu);
         return -1;
     }
@@ -110,17 +115,23 @@ void handle_conn(int conn)
     char buf[BUF_SIZE];
     size_t n, len = 0;
 
-    while ((n = read(conn, buf+len, BUF_SIZE)) > 0) {
+    char pbuf[BUF_SIZE];
+
+    while ((n = recv(conn, buf+len, BUF_SIZE, 0)) > 0) {
         len += n;
-        if (len > BUF_SIZE - 1 || buf[len-1] == '\n')
+        if (len > BUF_SIZE - 1)
+            break;
+        if (buf[len-1] == '\n')
             break;
     }
     if (len == 0) {
         fprintf(stderr, "Error zero bytes read\n");
         return;
     }
-    buf[len-1] = '\0';
-    printf("incoming[%lu] %s\n", n, buf);
+    buf[len] = '\0';
+    printf("======= request conn[%d] ====================\n", conn);
+    printf("%s\n", buf);
+     printf("====== end request conn[%d] len=%lu ========\n", conn, len);
     fflush(stdout);
 
     write(conn, "HTTP/1.0 200 OK\r\n\r\nHello web\n", 29);
