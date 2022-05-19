@@ -137,10 +137,10 @@ void handle_conn(int conn)
     close(conn);
 }
 
-// Mutiplex the connections
+// The entry point for the worker thread.
 // This function runs on each worker thread.
 // Checking the quere for new connections and then handle them.
-void *mux_conn(void *args)
+void *worker_start(void *args)
 {
     while (1) {
         int conn = conn_dequeue();  // will block until a connection is avaliable
@@ -166,7 +166,7 @@ int main(int argc, char *argv[])
     
     // Start worker pool
     for (int i = 0; i < NUM_WOKERS; i++) {
-        pthread_create(&workers[i], NULL, mux_conn, NULL);
+        pthread_create(&workers[i], NULL, worker_start, NULL);
     }
 
     struct sockaddr_in addr;
