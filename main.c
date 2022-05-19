@@ -143,7 +143,7 @@ void handle_conn(int conn)
 void *mux_conn(void *args)
 {
     while (1) {
-        int conn = conn_dequeue();
+        int conn = conn_dequeue();  // will block until a connection is avaliable
         handle_conn(conn);
     }
 }
