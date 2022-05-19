@@ -81,9 +81,9 @@ int conn_dequeue()
 static void usage()
 {
     fprintf(stdout,
-"Usage: lix [OPTIONS]\n"
-"  -h                 Display this help.\n"
-"  -p <port>          Server port (default: %d).\n", DEFAULT_PORT);
+        "Usage: lix [OPTIONS]\n"
+        "  -h                 Display this help.\n"
+        "  -p <port>          Server port (default: %d).\n", DEFAULT_PORT);
     exit(0);
 }
 
