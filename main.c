@@ -31,7 +31,7 @@ struct conn_qnode {
     struct conn_qnode *next;
 };
 
-// Connection Queue of awating connections read to be handled.
+// Connection queue of awating connections read to be handled.
 static struct conn_q {
     struct conn_qnode *head;
     struct conn_qnode *tail;
@@ -58,7 +58,7 @@ void conn_enqueue(int conn)
 }
 
 // Get and remove a connection from the queue.
-// Will block on empty queue until a new connection is place in queue.
+// Will block on empty queue until a new connection is placed in queue.
 int conn_dequeue()
 {
     pthread_mutex_lock(&conn_q.mu);
