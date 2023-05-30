@@ -3,3 +3,5 @@ https://www.aosabook.org/en/nginx.html#:~:text=nginx%20is%20event%2Dbased%2C%20s
 https://berb.github.io/diploma-thesis/original/043_threadsevents.html
 
 https://medium.com/thron-tech/you-should-prefer-event-based-over-thread-based-most-of-the-times-b2ce3c52bb1
+
+https://github.com/lammertb/libhttp
