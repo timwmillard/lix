@@ -2,6 +2,9 @@
 #include <stddef.h>
 #include <string.h>
 
+// TODO: Delete
+#define STR(str) *(char**)&str
+
 void *_malloc(size_t size);
 inline void *_malloc(size_t size)
 {
@@ -14,16 +17,18 @@ inline void *_realloc(void *ptr, size_t size)
     return realloc(ptr, size);
 }
 
+typedef char *String;
+
 // Dynamic String
 // Can be resized.
 // Compatiable with C Strings.
-typedef struct String {
+typedef struct StringBuf {
     char *data;
     size_t len;
     size_t cap;
-} String;
+} StringBuf;
 
-#define ZERO_STRING (String){NULL, 0, 0};
+#define ZERO_STRING (StringBuf){NULL, 0, 0};
 
 // String Slice
 // Window into a allocated String.
@@ -38,7 +43,7 @@ typedef struct Str {
 // Dynamic string with data on the heap
 String string_make(Str s);
 String string_make_with_cap(Str s, size_t cap);
-String _string_alloc(size_t cap);
+StringBuf _string_alloc(size_t cap);
 String cstring(char *s);
 size_t string_len(String s);
 size_t string_cap(String s);
@@ -57,7 +62,7 @@ void str_contains(Str haystack, Str needle);
 
 size_t _cstr_len(char *s);
 
-inline String _string_alloc(size_t cap)
+inline StringBuf _string_alloc(size_t cap)
 {
     // Add extra character for null terminated string.
     char *data = (char *) _malloc(sizeof(char) * cap + 1);
@@ -65,20 +70,22 @@ inline String _string_alloc(size_t cap)
         return ZERO_STRING;
     }
     data[0] = '\0';
-    return (String){
+    StringBuf new_string = {
         .data = data,
         .len = 0,
         .cap = cap
     };
+    return new_string;
+    // return *(char**)&new_string;
 }
 
 inline String string_make_with_cap(Str s, size_t cap)
 {
-    String ret = _string_alloc(s.len);
+    StringBuf ret = _string_alloc(s.len);
     memcpy(ret.data, s.data, s.len);
     ret.len = s.len;
     ret.data[ret.len] = '\0';
-    return ret;
+    return *(char**)&ret;
 }
 
 inline String string_make(Str s)
@@ -86,8 +93,9 @@ inline String string_make(Str s)
     return string_make_with_cap(s, s.len);
 }
 
-inline Str str_make(String s, unsigned int start, unsigned int end)
+inline Str str_make(String str, unsigned int start, unsigned int end)
 {
+    StringBuf s = *(StringBuf*)str;    
     if (start >= s.len || end >= s.len) return ZERO_STR;
     char *ptr = s.data;
     Str new_str = {
@@ -100,34 +108,37 @@ inline Str str_make(String s, unsigned int start, unsigned int end)
 inline String str_concat(Str s1, Str s2)
 {
     size_t len = s1.len + s2.len;
-    String new_string = string_make_with_cap(s1, len);
+    StringBuf new_string = *(StringBuf*)string_make_with_cap(s1, len);
     memcpy(&new_string.data[s1.len], s2.data, s2.len);
     new_string.len = len;
-    return new_string;
+    // return new_string;
+    return *(char**)&new_string;
 }
 
-inline void _string_grow(String *str, size_t cap)
-    {
-        if (str == NULL) return;
-        if (str->cap >= cap) return;
+inline void _string_grow(StringBuf *str, size_t cap)
+{
+    if (str == NULL) return;
+    if (str->cap >= cap) return;
 
-        size_t double_cap = str->cap * 2;
-        size_t new_cap;
-        if (cap < double_cap) {
-            new_cap = double_cap;
-        } else {
-            new_cap = cap;
-        }
-
-        void *new_data = _realloc(str->data, new_cap);
-        if (!new_data) return;
-        str->data = (char *)new_data;
-        str->cap = new_cap;
+    size_t double_cap = str->cap * 2;
+    size_t new_cap;
+    if (cap < double_cap) {
+        new_cap = double_cap;
+    } else {
+        new_cap = cap;
     }
 
+    void *new_data = _realloc(str->data, new_cap);
+    if (!new_data) return;
+    str->data = (char *)new_data;
+    str->cap = new_cap;
+}
+
 // TODO: Should this take a pointer intead of returning String??
-inline void string_append_impl(String *string, Str str)
+inline void string_append_impl(String *s, Str str)
 {
+    StringBuf *string = (StringBuf*) s;
+    if (string == NULL) return;
     if (string == NULL) return;
 
     size_t len = string->len + str.len;
@@ -158,10 +169,10 @@ inline Str cstr(char *s)
 inline String cstring(char *s)
 {
     size_t len = _cstr_len(s);
-    String new_string = _string_alloc(len);
+    StringBuf new_string = _string_alloc(len);
     memcpy(new_string.data, s, len);
     new_string.len = len;
-    return new_string;
+    return *(char**)&new_string;
 }
 
 inline size_t _cstr_len(char *s)
@@ -175,8 +186,9 @@ inline size_t _cstr_len(char *s)
     return len;
 }
 
-inline void string_drop(String str)
+inline void string_drop(String s)
 {
+    StringBuf str = *(StringBuf*) s;
     free(str.data);
 }
 
@@ -187,25 +199,27 @@ inline size_t str_len(Str s)
 
 inline size_t string_len(String s)
 {
-    return s.len;
+    StringBuf str = *(StringBuf*) s;
+    return str.len;
 }
 
 inline size_t string_cap(String s)
 {
-    return s.cap;
+    StringBuf str = *(StringBuf*) s;
+    return str.cap;
 }
 
 inline Str string_to_str(String s)
 {
+    StringBuf str = *(StringBuf*) s;
     return (Str){
-        .data = s.data,
-        .len = s.len,
+        .data = str.data,
+        .len = str.len,
     };
 }
 
 inline char *string_c(String str)
 {
-    return str.data;
+    return str;
 }
-
 
