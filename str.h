@@ -107,23 +107,23 @@ inline String str_concat(Str s1, Str s2)
 }
 
 inline void _string_grow(String *str, size_t cap)
-{
-    if (str == NULL) return;
-    if (str->cap >= cap) return;
+    {
+        if (str == NULL) return;
+        if (str->cap >= cap) return;
 
-    size_t double_cap = str->cap * 2;
-    size_t new_cap;
-    if (cap < double_cap) {
-        new_cap = double_cap;
-    } else {
-        new_cap = cap;
+        size_t double_cap = str->cap * 2;
+        size_t new_cap;
+        if (cap < double_cap) {
+            new_cap = double_cap;
+        } else {
+            new_cap = cap;
+        }
+
+        void *new_data = _realloc(str->data, new_cap);
+        if (!new_data) return;
+        str->data = (char *)new_data;
+        str->cap = new_cap;
     }
-
-    void *new_data = _realloc(str->data, new_cap);
-    if (!new_data) return;
-    str->data = (char *)new_data;
-    str->cap = new_cap;
-}
 
 // TODO: Should this take a pointer intead of returning String??
 inline void string_append_impl(String *string, Str str)
