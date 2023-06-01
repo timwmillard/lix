@@ -30,21 +30,30 @@ void test_string()
     string_drop(tim);
 }
 
-int main()
+void test_str()
 {
-    size_t len = _cstr_len("Tim Millard");
-    assert(len == 11);
-
-    test_string();
-
     Str tim = cstr("Tim Millard");
     assert(tim.len == 11);
 
     Str hello = cstr("Hello");
     Str world = cstr("World");
 
-    // String hello_world = str_concat(hello, world);
-    // assert(hello_world.len == 11);
+    String hello_world = str_concat(hello, world);
+    printf("hello_world.len = %ld\n", hello_world.len);
+    assert(hello_world.len == 10);
+    
+    test_passed("Str");
+
+    string_drop(hello_world);
+}
+
+int main()
+{
+    size_t len = _cstr_len("Tim Millard");
+    assert(len == 11);
+
+    test_string();
+    test_str();
 
     printf("******* All tests passed *******\n");
 
