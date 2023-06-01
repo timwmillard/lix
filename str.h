@@ -14,8 +14,6 @@ inline void *_realloc(void *ptr, size_t size)
     return realloc(ptr, size);
 }
 
-#define ZERO_STR (Str){NULL, 0};
-
 // Dynamic String
 // Can be resized.
 // Compatiable with C Strings.
@@ -34,6 +32,8 @@ typedef struct Str {
     size_t len;
 } Str;
 
+#define ZERO_STR (Str){NULL, 0};
+
 // String functions
 // Dynamic string with data on the heap
 String string_make(Str s);
@@ -44,7 +44,7 @@ size_t string_len(String s);
 size_t string_cap(String s);
 String string_append(String s, Str data);
 void string_drop(String str);
-char *string_to_cstr(String str);
+char *string_c(String str);
 Str string_to_str(String s);
 
 // Str functions
@@ -203,7 +203,7 @@ inline Str string_to_str(String s)
     };
 }
 
-inline char *string_to_cstr(String str)
+inline char *string_c(String str)
 {
     return str.data;
 }
