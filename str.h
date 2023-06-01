@@ -39,7 +39,6 @@ typedef struct Str {
 // Dynamic string with data on the heap
 String string_make(Str s);
 String string_make_with_cap(Str s, size_t cap);
-String _string_alloc(size_t cap);
 String cstring(char *s);
 void string_append(String *string, Str str);
 size_t string_len(String s);
@@ -47,6 +46,9 @@ size_t string_cap(String s);
 void string_drop(String str);
 char *string_c(String str);
 Str string_to_str(String s);
+String _string_alloc(size_t cap);
+void _string_grow(String *str, size_t cap);
+void _string_debug(String str);
 
 // Str functions
 // Immutable string. A dynmaic slice into a string.
@@ -55,10 +57,9 @@ Str cstr(char *s);
 size_t str_len(Str s);
 String str_concat(Str s1, Str s2);
 void str_contains(Str haystack, Str needle);
+void _str_debug(Str str);
 
 size_t _cstr_len(char *s);
-void _string_grow(String *str, size_t cap);
-void string_debug(String str);
 
 inline String _string_alloc(size_t cap)
 {
@@ -89,13 +90,14 @@ inline String string_make(Str s)
     return string_make_with_cap(s, s.len);
 }
 
-inline Str str_make(String s, unsigned int start, unsigned int end)
+inline Str str_make(String s, unsigned int low, unsigned int high)
 {
-    if (start >= s.len || end >= s.len) return ZERO_STR;
-    char *ptr = s.data;
+    size_t len = (size_t) high - low;
+    if (low >= s.len || len >= s.len) return ZERO_STR;
+    char *ptr = s.data + low;
     Str new_str = {
-        .data = ptr + start,
-        .len = (size_t) end - start,
+        .data = ptr,
+        .len = len,
     };
     return new_str;
 }
@@ -213,7 +215,7 @@ inline char *string_c(String str)
     return str.data;
 }
 
-inline void string_debug(String str)
+inline void _string_debug(String str)
 {
     printf("cstring = %s\n", string_c(str));
     printf("len = %ld\n", str.len);
@@ -221,6 +223,23 @@ inline void string_debug(String str)
 
     putchar('|');
     for (int i = 0; i < str.cap; i++) {
+        putchar(' ');
+        if (str.data[i] == '\0')
+            putchar('@');
+        else
+            putchar(str.data[i]);
+        putchar(' ');
+        putchar('|');
+    }
+    putchar('\n');
+}
+
+inline void _str_debug(Str str)
+{
+    printf("len = %ld\n", str.len);
+
+    putchar('|');
+    for (int i = 0; i < str.len; i++) {
         putchar(' ');
         if (str.data[i] == '\0')
             putchar('@');
