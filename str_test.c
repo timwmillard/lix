@@ -5,7 +5,7 @@
 
 int main()
 {
-    size_t len = cstr_len("Tim Millard");
+    size_t len = _cstr_len("Tim Millard");
     assert(len == 11);
 
     Str tim = cstr("Tim Millard");
