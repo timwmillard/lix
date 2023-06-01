@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <stdlib.h>
 #include <stddef.h>
 #include <string.h>
@@ -40,9 +41,9 @@ String string_make(Str s);
 String string_make_with_cap(Str s, size_t cap);
 String _string_alloc(size_t cap);
 String cstring(char *s);
+void string_append(String *string, Str str);
 size_t string_len(String s);
 size_t string_cap(String s);
-String string_append(String s, Str data);
 void string_drop(String str);
 char *string_c(String str);
 Str string_to_str(String s);
@@ -56,6 +57,8 @@ String str_concat(Str s1, Str s2);
 void str_contains(Str haystack, Str needle);
 
 size_t _cstr_len(char *s);
+void _string_grow(String *str, size_t cap);
+void string_debug(String str);
 
 inline String _string_alloc(size_t cap)
 {
@@ -68,7 +71,7 @@ inline String _string_alloc(size_t cap)
     return (String){
         .data = data,
         .len = 0,
-        .cap = cap
+        .cap = cap + 1,
     };
 }
 
@@ -107,39 +110,41 @@ inline String str_concat(Str s1, Str s2)
 }
 
 inline void _string_grow(String *str, size_t cap)
-    {
-        if (str == NULL) return;
-        if (str->cap >= cap) return;
+{
+    if (str == NULL) return;
+    if (str->cap >= cap) return;
 
-        size_t double_cap = str->cap * 2;
-        size_t new_cap;
-        if (cap < double_cap) {
-            new_cap = double_cap;
-        } else {
-            new_cap = cap;
-        }
-
-        void *new_data = _realloc(str->data, new_cap);
-        if (!new_data) return;
-        str->data = (char *)new_data;
-        str->cap = new_cap;
+    size_t double_cap = str->cap * 2;
+    size_t new_cap;
+    if (cap < double_cap) {
+        new_cap = double_cap;
+    } else {
+        new_cap = cap;
     }
+    new_cap++;
 
-// TODO: Should this take a pointer intead of returning String??
-inline void string_append_impl(String *string, Str str)
+    void *new_data = _realloc(str->data, new_cap);
+    if (!new_data) return;
+    str->data = (char *)new_data;
+    str->cap = new_cap;
+}
+
+inline void string_append(String *string, Str str)
 {
     if (string == NULL) return;
 
     size_t len = string->len + str.len;
     _string_grow(string, len);
+    char *start = (char *)&string->data[string->len];
+    memcpy(start, str.data, str.len);
     string->len = len;
-    memcpy(&string->data[string->len], str.data, str.len);
+    string->data[len] = '\0';
 }
 
-#define string_append(src, str)                         \
-    _Generic(str,                                       \
-    const char *: string_append_impl(src, cstr(str)),   \
-    default: string_append_impl(src, str))
+// #define string_append(src, str)                         \
+//     _Generic(str,                                       \
+//     const char *: string_append_impl(src, cstr(str)),   \
+//     default: string_append_impl(src, str))
 
 inline Str cstr(char *s)
 {
@@ -208,4 +213,22 @@ inline char *string_c(String str)
     return str.data;
 }
 
+inline void string_debug(String str)
+{
+    printf("cstring = %s\n", string_c(str));
+    printf("len = %ld\n", str.len);
+    printf("cap = %ld\n", str.cap);
+
+    putchar('|');
+    for (int i = 0; i < str.cap; i++) {
+        putchar(' ');
+        if (str.data[i] == '\0')
+            putchar('@');
+        else
+            putchar(str.data[i]);
+        putchar(' ');
+        putchar('|');
+    }
+    putchar('\n');
+}
 
