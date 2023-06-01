@@ -6,7 +6,7 @@ RM = rm -rf
 
 CFLAGS =
 LIBS =
-INCLUDES =
+INCLUDES = "deps/picohttpparser"
 
 all: build
 
@@ -21,5 +21,10 @@ serve: build run
 install: build
 	cp $(EXEC) $(HOME)/bin/
 
+str_test: str.h str_test.c
+	$(CC) -o str_test str_test.c
+
+test: str_test
+	./str_test
 clean:
 	rm -rf $(EXEC)
