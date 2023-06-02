@@ -3,17 +3,7 @@
 #include <stddef.h>
 #include <string.h>
 
-void *_malloc(size_t size);
-inline void *_malloc(size_t size)
-{
-    return malloc(size);
-}
-
-void *_realloc(void *ptr, size_t size);
-inline void *_realloc(void *ptr, size_t size)
-{
-    return realloc(ptr, size);
-}
+#include "lib.h"
 
 // Dynamic String
 // Can be resized.
@@ -40,7 +30,9 @@ typedef struct Str {
 String string_make(Str s);
 String string_make_with_cap(Str s, size_t cap);
 String cstring(char *s);
-void string_append(String *string, Str str);
+void string_append_str(String *string, Str str);
+void string_append_string(String *string, String str);
+void string_append_cstr(String *string, char *str);
 size_t string_len(String s);
 size_t string_cap(String s);
 void string_drop(String str);
@@ -131,7 +123,28 @@ inline void _string_grow(String *str, size_t cap)
     str->cap = new_cap;
 }
 
-inline void string_append(String *string, Str str)
+// String append
+#define string_append(src, str)            \
+      _Generic(str,                        \
+         Str: string_append_str,           \
+         String: string_append_string,     \
+         const char *: string_append_cstr, \
+         char *: string_append_cstr,       \
+         default: string_append_str        \
+     )(src ,str)
+
+inline void string_append_string(String *string, String str)
+{
+    string_append_str(string, string_to_str(str));
+}
+
+inline void string_append_cstr(String *string, char *str)
+{
+    Str s = cstr(str);
+    string_append_str(string, s);
+}
+
+inline void string_append_str(String *string, Str str)
 {
     if (string == NULL) return;
 
@@ -142,11 +155,6 @@ inline void string_append(String *string, Str str)
     string->len = len;
     string->data[len] = '\0';
 }
-
-// #define string_append(src, str)                         \
-//     _Generic(str,                                       \
-//     const char *: string_append_impl(src, cstr(str)),   \
-//     default: string_append_impl(src, str))
 
 inline Str cstr(char *s)
 {

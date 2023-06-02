@@ -8,26 +8,31 @@ void test_passed(char *name)
     printf("*** Test %s passed ***\n", name);
 }
 
+        //String: "",  string_c(str),          
 void test_string()
 {
-
-    String tim = cstring("Tim Millard");
+    String tim = cstring("Tim");
     printf("tim = \"%s\"\n", string_c(tim));
     printf("tim.len = %ld\n",  tim.len);
     printf("tim.cap = %ld\n",  tim.cap);
-    assert(tim.len == 11);
-    assert(tim.cap == 12);
+    assert(tim.len == 3);
+    assert(tim.cap == 4);
 
-    string_append(&tim, cstr(" loves C"));
+    Str w = cstr(" W");
+    String millard = cstring(" Millard");
+    string_append(&tim, w);
+    string_append(&tim, millard);
+    string_append(&tim, " loves C");
     printf("tim = %s\n", string_c(tim));
     printf("tim.len = %ld\n",  tim.len);
     printf("tim.cap = %ld\n",  tim.cap);
-    assert(tim.len == 19);
-    assert(tim.cap == 25); // Cap doubled
+    assert(tim.len == 21);
+    assert(tim.cap == 39); 
 
     test_passed("String");
 
     string_drop(tim);
+    string_drop(millard);
 }
 
 void test_str()
