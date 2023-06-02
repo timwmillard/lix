@@ -123,7 +123,7 @@ inline void _string_grow(String *str, size_t cap)
     } else {
         new_cap = cap;
     }
-    new_cap++;
+    new_cap++; // Add extra space for null terminator.
 
     void *new_data = _realloc(str->data, new_cap);
     if (!new_data) return;
