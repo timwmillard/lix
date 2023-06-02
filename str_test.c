@@ -41,9 +41,11 @@ void test_str()
     assert(tim.len == 11);
 
     Str hello = str_c("Hello");
-    Str world = str_c("World");
+    String world = string_c("World");
+    Str world1 = *(Str*) &world;
 
     String hello_world = str_concat(hello, world);
+    printf("hello_world = %s\n", cstr(hello_world));
     printf("hello_world.len = %ld\n", hello_world.len);
     assert(hello_world.len == 10);
    

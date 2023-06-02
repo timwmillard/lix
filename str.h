@@ -33,6 +33,9 @@ String string_c(char *s);
 void string_append_str(String *string, Str str);
 void string_append_string(String *string, String str);
 void string_append_cstr(String *string, char *str);
+String string_concat_str(String s1, Str s2);
+String string_concat_cstr(String s1, char *s2);
+String string_concat_string(String s1, String s2);
 size_t string_len(String s);
 size_t string_cap(String s);
 void string_drop(String str);
@@ -47,7 +50,9 @@ void _string_debug(String str);
 Str str_make(String s, unsigned int start, unsigned int end);
 Str str_c(char *s);
 size_t str_len(Str s);
-String str_concat(Str s1, Str s2);
+String str_concat_str(Str s1, Str s2);
+String str_concat_cstr(Str s1, char *s2);
+String str_concat_string(Str s1, String s2);
 void str_contains(Str haystack, Str needle);
 void _str_debug(Str str);
 
@@ -94,14 +99,59 @@ inline Str str_make(String s, unsigned int low, unsigned int high)
     return new_str;
 }
 
-inline String str_concat(Str s1, Str s2)
+// Str concat 
+#define str_concat(s1, s2)              \
+      _Generic(s2,                      \
+         Str: str_concat_str,           \
+         String: str_concat_string,     \
+         const char *: str_concat_cstr, \
+         char *: str_concat_str,        \
+         default: str_concat_str        \
+     )(s1, s2)
+
+inline String str_concat_cstr(Str s1, char *s2)
+{
+    return str_concat_str(s1, str_c(s2));
+}
+
+inline String str_concat_string(Str s1, String s2)
+{
+    return str_concat_str(s1, string_to_str(s2));
+}
+
+inline String str_concat_str(Str s1, Str s2)
 {
     size_t len = s1.len + s2.len;
     String new_string = string_make_with_cap(s1, len);
-    memcpy(&new_string.data[s1.len], s2.data, s2.len);
-    new_string.len = len;
+    string_append_str(&new_string, s2);
     return new_string;
 }
+
+// String concat 
+#define string_concat(s1, s2)              \
+      _Generic(s2,                         \
+         Str: string_concat_str,           \
+         String: string_concat_string,     \
+         const char *: string_concat_cstr, \
+         char *: string_concat_str,        \
+         default: string_concat_str        \
+     )(s1, s2)
+
+inline String string_concat_cstr(String s1, char *s2)
+{
+    return str_concat_str(string_to_str(s1), str_c(s2));
+}
+
+inline String string_concat_string(String s1, String s2)
+{
+    return str_concat_str(string_to_str(s1), string_to_str(s2));
+}
+
+inline String string_concat_str(String s1, Str s2)
+{
+    return str_concat_str(string_to_str(s1), s2);
+}
+
 
 inline void _string_grow(String *str, size_t cap)
 {
@@ -131,7 +181,7 @@ inline void _string_grow(String *str, size_t cap)
          const char *: string_append_cstr, \
          char *: string_append_cstr,       \
          default: string_append_str        \
-     )(src ,str)
+     )(src, str)
 
 inline void string_append_string(String *string, String str)
 {
