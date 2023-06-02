@@ -29,14 +29,14 @@ typedef struct Str {
 // Dynamic string with data on the heap
 String string_make(Str s);
 String string_make_with_cap(Str s, size_t cap);
-String cstring(char *s);
+String string_c(char *s);
 void string_append_str(String *string, Str str);
 void string_append_string(String *string, String str);
 void string_append_cstr(String *string, char *str);
 size_t string_len(String s);
 size_t string_cap(String s);
 void string_drop(String str);
-char *string_c(String str);
+char *cstr(String str);
 Str string_to_str(String s);
 String _string_alloc(size_t cap);
 void _string_grow(String *str, size_t cap);
@@ -45,7 +45,7 @@ void _string_debug(String str);
 // Str functions
 // Immutable string. A dynmaic slice into a string.
 Str str_make(String s, unsigned int start, unsigned int end);
-Str cstr(char *s);
+Str str_c(char *s);
 size_t str_len(Str s);
 String str_concat(Str s1, Str s2);
 void str_contains(Str haystack, Str needle);
@@ -140,7 +140,7 @@ inline void string_append_string(String *string, String str)
 
 inline void string_append_cstr(String *string, char *str)
 {
-    Str s = cstr(str);
+    Str s = str_c(str);
     string_append_str(string, s);
 }
 
@@ -156,7 +156,7 @@ inline void string_append_str(String *string, Str str)
     string->data[len] = '\0';
 }
 
-inline Str cstr(char *s)
+inline Str str_c(char *s)
 {
     char *ptr = s;
     size_t len = 0;
@@ -170,7 +170,7 @@ inline Str cstr(char *s)
     };
 }
 
-inline String cstring(char *s)
+inline String string_c(char *s)
 {
     size_t len = _cstr_len(s);
     String new_string = _string_alloc(len);
@@ -218,14 +218,14 @@ inline Str string_to_str(String s)
     };
 }
 
-inline char *string_c(String str)
+inline char *cstr(String str)
 {
     return str.data;
 }
 
 inline void _string_debug(String str)
 {
-    printf("cstring = %s\n", string_c(str));
+    printf("cstring = %s\n", cstr(str));
     printf("len = %ld\n", str.len);
     printf("cap = %ld\n", str.cap);
 

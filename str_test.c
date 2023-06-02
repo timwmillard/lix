@@ -11,19 +11,19 @@ void test_passed(char *name)
         //String: "",  string_c(str),          
 void test_string()
 {
-    String tim = cstring("Tim");
-    printf("tim = \"%s\"\n", string_c(tim));
+    String tim = string_c("Tim");
+    printf("tim = \"%s\"\n", cstr(tim));
     printf("tim.len = %ld\n",  tim.len);
     printf("tim.cap = %ld\n",  tim.cap);
     assert(tim.len == 3);
     assert(tim.cap == 4);
 
-    Str w = cstr(" W");
-    String millard = cstring(" Millard");
+    Str w = str_c(" W");
+    String millard = string_c(" Millard");
     string_append(&tim, w);
     string_append(&tim, millard);
     string_append(&tim, " loves C");
-    printf("tim = %s\n", string_c(tim));
+    printf("tim = %s\n", cstr(tim));
     printf("tim.len = %ld\n",  tim.len);
     printf("tim.cap = %ld\n",  tim.cap);
     assert(tim.len == 21);
@@ -37,11 +37,11 @@ void test_string()
 
 void test_str()
 {
-    Str tim = cstr("Tim Millard");
+    Str tim = str_c("Tim Millard");
     assert(tim.len == 11);
 
-    Str hello = cstr("Hello");
-    Str world = cstr("World");
+    Str hello = str_c("Hello");
+    Str world = str_c("World");
 
     String hello_world = str_concat(hello, world);
     printf("hello_world.len = %ld\n", hello_world.len);
@@ -50,7 +50,7 @@ void test_str()
     Str loW = str_make(hello_world, 3, 6);
     assert(loW.len == 3);
     String low = string_make(loW);
-    printf("low = \"%s\"\n", string_c(low));
+    printf("low = \"%s\"\n", cstr(low));
    
     _str_debug(loW);
 
