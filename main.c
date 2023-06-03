@@ -10,6 +10,7 @@
 #include <signal.h>
 
 #include "picohttpparser.h"
+#include "http.h"
 
 #define DEFAULT_PORT 9333
 #define SERVER_BACKLOG 100
@@ -109,13 +110,42 @@ void parse_options(int argc, char *argv[])
     }
 }
 
+HttpRequest parse_http_request(char *buf, size_t buflen)
+{
+    char *method, *path;
+    int pret, minor_version;
+    struct phr_header headers[100];
+    size_t prevbuflen = 0, method_len, path_len, num_headers;
+    ssize_t rret;
+
+    num_headers = sizeof(headers) / sizeof(headers[0]);
+    pret = phr_parse_request(buf, buflen, &method, &method_len, &path, &path_len,
+            &minor_version, headers, &num_headers, prevbuflen);
+    if (pret == -1) {
+        fprintf(stderr, "Parser error\n");
+        return (HttpRequest){};
+    }
+    printf("request is %d bytes long\n", pret);
+    printf("method is %.*s\n", (int)method_len, method);
+    printf("path is %.*s\n", (int)path_len, path);
+    printf("HTTP version is 1.%d\n", minor_version);
+    printf("headers:\n");
+    for (int i = 0; i != num_headers; ++i) {
+        printf("%.*s: %.*s\n", (int)headers[i].name_len, headers[i].name,
+               (int)headers[i].value_len, headers[i].value);
+    }
+
+    HttpRequest req;
+    return req;
+}
+
 // Handle the connection
 void handle_conn(int conn)
 {
     char buf[BUF_SIZE];
     size_t n, len = 0;
 
-    char pbuf[BUF_SIZE];
+    memset(buf, 0, BUF_SIZE);
 
     while ((n = recv(conn, buf+len, BUF_SIZE, 0)) > 0) {
         len += n;
@@ -128,14 +158,17 @@ void handle_conn(int conn)
         fprintf(stderr, "Error zero bytes read\n");
         return;
     }
-    buf[len] = '\0';
+    // buf[len] = '\0';
     printf("======= request conn[%d] ====================\n", conn);
-    printf("%s\n", buf);
+    // printf("%s\n", buf);
     printf("====== end request conn[%d] len=%lu ========\n", conn, len);
     fflush(stdout);
 
-    write(conn, "HTTP/1.0 200 OK\r\n\r\nHello web\n", 29);
+    HttpRequest req = parse_http_request(buf, n);
 
+
+    // Reponsce
+    write(conn, "HTTP/1.0 200 OK\r\n\r\nHello web\n", 29);
     close(conn);
 }
 
