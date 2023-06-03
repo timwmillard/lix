@@ -10,3 +10,7 @@ https://github.com/h2o/picohttpparser
 
 https://github.com/h2o/h2o/
 
+http://blog.kazuhooku.com/2014/11/the-internals-h2o-or-how-to-write-fast.html
+
+Modern C and What We Can Learn From It - Luca Sas [ ACCU 2021 ]
+https://www.youtube.com/watch?v=QpAhX-gsHMs

@@ -1,3 +1,4 @@
+lix = require('lix')
 
 lix.database = {
     hostname = "localhost",
@@ -23,6 +24,11 @@ local homesql = [[
     FROM user
     WHERE user_id = $1
 ]]
+
+Tx = require("sql.Tx")
+function Tx:Event(topic, data, meta)
+   self.query("INSERT INTO event.event", topic) 
+end
 
 function home(req, body, res)
     userId = req.var["user_id"]
@@ -54,5 +60,6 @@ function payment(req, res)
         name = result.first_name
     })
 
+    tx.Event("payment.created", result)
    tx.commit()
 end
