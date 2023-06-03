@@ -8,3 +8,5 @@
 /map_test
 /vec_test
 
+/deps/picohttpparser
+
